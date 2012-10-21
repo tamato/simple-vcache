@@ -150,12 +150,14 @@ void vcache::_init_verts(const MeshBuffer& buffer)
         Verts[vert_idx].reference_list.push_back( i / 3 );
     }
 
+    /*
     int average_valence = 0;
     for (int i=0; i<(int)Verts.size(); ++i) {
         average_valence += Verts[i].maxValence;
     }
     average_valence /= Verts.size();
     cout << "[ ] average valence: " << average_valence << endl;
+    */
 }
 
 void vcache::_init_tris(const MeshBuffer& buffer)
@@ -238,8 +240,9 @@ int  vcache::_find_next_tri()
         int vert_idx = LRU[i];
         for (int j=0; j<(int)Verts[vert_idx].reference_list.size(); ++j) {
             int tri_idx = Verts[vert_idx].reference_list[j];
-            if (Tris[tri_idx].in_cache) continue;
+            if (Tris[tri_idx].in_cache) break;
 
+            _score_triangle(tri_idx);
             if (Tris[tri_idx].score > highest_score) {
                 highest_score = Tris[tri_idx].score;
                 highest_index = tri_idx;
@@ -295,28 +298,18 @@ void vcache::_add_tri_to_LRU(int index)
             }
         }
 
-        LRU.push_back(vert_idx);
+        LRU.push_front(vert_idx);
     }
 
-    int difference = (int)LRU.size() - (MaxSizeCache-3);
-    for (int i=0; i<difference; ++i)
-        LRU.pop_front();
+    while (LRU.size() > (MaxSizeCache-3)) {
+        LRU.pop_back();
+    }
 
     for (int i=0; i<(int)LRU.size(); ++i) {
-        vert_idx = LRU[i];
+        // score verts
+        int vert_idx = LRU[i];
         Verts[vert_idx].cache_pos = i;
         _score_vertex(vert_idx);
-    }
-
-    // all verts are scored, update the triangles they refer to
-    for (int i=0; i<(int)LRU.size(); ++i) {
-        vert_idx = LRU[i];
-
-        for (int j=0; j<(int)Verts[vert_idx].reference_list.size(); ++j) {
-            int tri_idx = Verts[vert_idx].reference_list[j];
-            if (Tris[tri_idx].in_cache) break;
-            _score_triangle(tri_idx);
-        }
     }
 }
 
