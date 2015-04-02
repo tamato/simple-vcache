@@ -8,6 +8,8 @@
 
 namespace sp // Simple and to the Point
 {
+    // implements: 
+    // http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html
     class vcache
     {
     public:
