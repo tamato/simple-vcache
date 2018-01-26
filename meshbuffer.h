@@ -16,7 +16,8 @@ public:
     MeshBuffer(const MeshBuffer & ref);
     MeshBuffer& operator=(const MeshBuffer & ref);
 
-    void loadFile(const char * fileName);
+    void loadFileObj(const char * fileName);
+    void loadFileStl(const char * fileName);
 
     void setVerts(unsigned int count, const float* verts);
     void setNorms(unsigned int count, const float* normals);
