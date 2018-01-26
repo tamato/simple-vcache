@@ -51,6 +51,7 @@ MeshBuffer& MeshBuffer::operator=(const MeshBuffer & ref)
 void MeshBuffer::loadFileObj(const char * fileName)
 {
   // get the mesh
+    #ifdef HIDEME
     AttributeContainer<Attributes::Position> constPosition = mesh->GetAttributes<Attributes::Position>( size_t(0u) );
     AttributeContainer<Attributes::Position>::const_iterator pos_itr = constPosition.begin();
 
@@ -160,54 +161,63 @@ void MeshBuffer::loadFileObj(const char * fileName)
 
     out_file << std::endl;
     out_file.close();
+    #endif
 }
 
 void MeshBuffer::loadFileStl(const char * fileName)
 {
-    // get the mesh
-    AttributeContainer<Attributes::Position> constPosition = mesh->GetAttributes<Attributes::Position>(size_t(0u));
+    std::ifstream in_file(filename, std::ifstream::binary);
 
-    FaceContainer faces = mesh->GetFaces();
-
-    /* The Stl file format description
+    /*  
+        The Stl file format description
         From: https://en.wikipedia.org/wiki/STL_(file_format)
-    UINT8[80] – Header, ignored by most applications
-    UINT32 – Number of triangles
+        UINT8[80] – Header, ignored by most applications
+        UINT32 – Number of triangles
 
-    foreach triangle
-    REAL32[3] – Normal vector, if the normal is (0,0,0) most applications will generate the facet normal
-    REAL32[3] – Vertex 1
-    REAL32[3] – Vertex 2
-    REAL32[3] – Vertex 3
-    UINT16 – Attribute byte count, almost no applications use this and should be 0
-    end
+        foreach triangle
+        REAL32[3] – Normal vector, if the normal is (0,0,0) most applications will generate the facet normal
+        REAL32[3] – Vertex 1
+        REAL32[3] – Vertex 2
+        REAL32[3] – Vertex 3
+        UINT16 – Attribute byte count, almost no applications use this and should be 0
+        end
+    */
+
+
+    /*
+        unsigned int VertCnt;
+        unsigned int IdxCnt;
+
+        std::vector<glm::vec3> Verts;
+        std::vector<glm::vec3> Norms;
+        std::vector<glm::vec2> TexCoords;
+
+        std::vector<uint32_t>  Indices;
     */
 
     uint8_t header[80] = { 0 };
-    uint32_t  num_triangles = (uint32_t)faces.size();
+    uint32_t num_triangles = 0;
+    in_file.read((const char*)&header[0], 80);
+    in_file.read((const char*)&num_triangles, sizeof(uint32_t));
+
+    VertCnt = num_triangles / 3;
+    IdxCnt = ;
     
-    std::ofstream out_file(filename.c_str(), std::ofstream::out | std::ofstream::binary);
-    out_file.write((const char*)&header[0], 80);
-    out_file.write((const char*)&num_triangles, sizeof(uint32_t));
-    
-    uint16_t attribute_byte_count = 0;
     for (uint32_t i = 0; i < num_triangles; ++i)
     {
-        Math::Point3 vert_pos_a = constPosition[faces[i].A];
-        Math::Point3 vert_pos_b = constPosition[faces[i].B];
-        Math::Point3 vert_pos_c = constPosition[faces[i].C];
+        glm::vec3 verta, vertb, vertc;
+        glm::vec3 normal;
+        in_file.write((const char*)&normal, sizeof(glm::vec3));
+        in_file.write((const char*)&verta, sizeof(glm::vec3));
+        in_file.write((const char*)&vertb, sizeof(glm::vec3));
+        in_file.write((const char*)&vertc, sizeof(glm::vec3));
 
-        Math::Vector3 edge_ab = vert_pos_b - vert_pos_a;
-        Math::Vector3 edge_ac = vert_pos_c - vert_pos_a;
-        Math::Vector3 facet_normal = Math::normalize(Math::cross(edge_ac, edge_ab));
-        
-        out_file.write((const char*)&facet_normal, sizeof(Math::Vector3));
-        out_file.write((const char*)&vert_pos_a, sizeof(Math::Point3));
-        out_file.write((const char*)&vert_pos_b, sizeof(Math::Point3));
-        out_file.write((const char*)&vert_pos_c, sizeof(Math::Point3));
-        out_file.write((const char*)&attribute_byte_count, sizeof(uint16_t));
+        // move to the next bytes.
+        uint16_t null;
+        in_file.write((const char*)&null, sizeof(uint16_t));
+
     }
-    out_file.close();
+    in_file.close();
 }
 
 void MeshBuffer::setVerts(unsigned int count, const float* verts)
