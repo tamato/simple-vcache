@@ -10,6 +10,7 @@ namespace sp // Simple and to the Point
 {
     // implements: 
     // http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html
+    // https://tomforsyth1000.github.io/papers/fast_vert_cache_opt.html
     class vcache
     {
     public:
